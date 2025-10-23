@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v1
+        with:
+          version: "7.4"
+
+      - name: Install Pester
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck
+          Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
+
+      - name: Import Module
+        run: |
+          Import-Module .\BuildTools.psd1 -Force
+
+      - name: Run PSScriptAnalyzer
+        run: |
+          Invoke-ScriptAnalyzer -Path .\Functions\ -Recurse -Severity Error
+
+      - name: Test Module Loading
+        run: |
+          $module = Import-Module .\BuildTools.psd1 -Force -PassThru
+          if ($module) {
+            Write-Host "Module loaded successfully" -ForegroundColor Green
+            Get-Command -Module BuildTools | Measure-Object | ForEach-Object { Write-Host "Exported $($_.Count) functions" -ForegroundColor Green }
+          } else {
+            Write-Error "Failed to load module"
+            exit 1
+          }
+
+      - name: Test Basic Functions
+        run: |
+          # Test utility functions
+          $timestamp = Get-UnixTimestamp
+          if ($timestamp -gt 0) {
+            Write-Host "Get-UnixTimestamp works: $timestamp" -ForegroundColor Green
+          }
+
+          # Test template functions
+          $gitignoreContent = Get-GitIgnoreTemplate -Type "CSharp"
+          if ($gitignoreContent) {
+            Write-Host "Get-GitIgnoreTemplate works" -ForegroundColor Green
+          }
+
+          # Test version functions
+          $bumpedVersion = Bump-VersionNumber -OldVersion "1.0.0.0"
+          if ($bumpedVersion -eq "1.0.0.1") {
+            Write-Host "Bump-VersionNumber works: $bumpedVersion" -ForegroundColor Green
+          }

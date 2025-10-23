@@ -1,0 +1,40 @@
+name: Publish to PowerShell Gallery
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v1
+        with:
+          version: "7.4"
+
+      - name: Install PowerShellGet
+        run: |
+          Install-Module -Name PowerShellGet -Force -AllowClobber
+          Install-Module -Name PublishModule -Force -AllowClobber
+
+      - name: Validate Module
+        run: |
+          Import-Module .\BuildTools.psd1 -Force
+          Write-Host "Module validation passed" -ForegroundColor Green
+
+      - name: Publish to PowerShell Gallery
+        env:
+          NUGET_API_KEY: ${{ secrets.POWERSHELLGALLERY_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) {
+            Write-Warning "NUGET_API_KEY not set, skipping publish"
+            exit 0
+          }
+
+          Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Force
+          Write-Host "Module published to PowerShell Gallery" -ForegroundColor Green

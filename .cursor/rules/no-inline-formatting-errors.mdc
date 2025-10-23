@@ -1,0 +1,6 @@
+---
+globs: *.ps1,*.psd1,*.psm1
+alwaysApply: false
+---
+
+Make sure to never put a variable in a string directly infront of a colon. Never do something like "Bumped version in $file: $oldVersion". Either do "Bumped version in $($file): $oldVersion" or add a space before the colon
