@@ -43,9 +43,9 @@ Write-Host "Module Version: $($manifest.ModuleVersion)" -ForegroundColor Cyan
 # Test basic functionality
 Write-Host "Testing basic functionality..." -ForegroundColor Yellow
 try {
-    $timestamp = Get-UnixTimestamp
+    $timestamp = Get-FileUnixTimestamp "BuildTools.psd1"
     if ($timestamp -gt 0) {
-        Write-Host "✓ Get-UnixTimestamp works" -ForegroundColor Green
+        Write-Host "✓ Get-FileUnixTimestamp works" -ForegroundColor Green
     }
     
     $gitignoreContent = Get-GitIgnoreTemplate -Type "CSharp"
